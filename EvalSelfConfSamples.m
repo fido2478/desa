@@ -1,0 +1,162 @@
+function EvalSelfConfSamples
+% This function evaluate how effectively dynamic-voltage
+% allowing policy works as demand voltage changes over time
+%Global parameters
+clear
+CurNumDev=0; %the current number of devices
+NumDev=700;%25;
+BatVolt=4.3;
+BatAmp=1.3;
+CFrate=0.7;
+StartVolt=610; %ampere
+voltagefast=[];numfcells=[];
+voltageslow=[];
+fqof=0; %frequency of faut occurrence
+fqod=1; %frequency of degradation of voltage over time by nature
+fqov=201;
+vdegArt=0; dratio=0.995;
+lifetime=200;
+pfast=findpolyfunc(100,0); %viewed as discharge rate: if scale>1 stretch otherwise not
+pslow=findpolyfunc(200,0);
+range=['[' num2str(BatVolt) 'V(' num2str(BatAmp*NumDev)...
+    'A) - ' num2str(BatVolt*NumDev) 'V(' num2str(BatAmp) 'A)]']
+
+
+LCon=struct('name',['lcon' num2str(1)],...
+    'Nt',{NumDev},'Nf',{0},'Vd',{StartVolt},'Np',{0},'Ns',{0},...
+    'nomV',{BatVolt},'aveV',{0},'totV',{0},'totA',{0},...
+    'totV2',{0},'totA2',{0},...
+    'selectpolicy','lowest-voltage-first',...
+    'dname',[1 NumDev], 'dcurvolt',rand([1 NumDev])*BatVolt*0.01+BatVolt*0.99,...
+    'dcurvolt2',rand([1 NumDev])*BatVolt*0.01+BatVolt*0.99,...
+    'dcuramp',rand([1 NumDev])*BatAmp*0.01+BatAmp*0.99,...
+    'dfeedsw',rand([1 NumDev])*0,...
+    'dparasw',rand([1 NumDev])*0,'dserisw',rand([1 NumDev])*0,...
+    'dbypsw',rand([1 NumDev])*0,'dfaultcells',rand([1 NumDev])*0,...
+    'ddetourcells',rand([1 NumDev])*0,'dconncells',rand([1 NumDev])*0);
+
+figure
+hold on
+for gi=1:lifetime
+
+if mod(gi,fqov)==0 | gi == 1
+
+    LCon.totV=0;LCon.totA=0;
+    %Initialization:Open switches
+    LCon.dfeedsw=rand([1 NumDev])*0;
+    LCon.dparasw=rand([1 NumDev])*0;
+    LCon.dserisw=rand([1 NumDev])*0;
+    LCon.dbypsw=rand([1 NumDev])*0;
+    %Initialization:faulty cells
+    %LCon.dfaultcells=rand([1 NumDev])*0;
+    LCon.dconncells=rand([1 NumDev])*0;
+    LCon.ddetourcells=rand([1 NumDev])*0;
+
+    % calcul average voltage
+    voltagecutoff=LCon.nomV*CFrate;
+    tind=find(LCon.dfaultcells==0);
+    if ~isempty(tind)
+        LCon.aveV=mean(LCon.dcurvolt(tind)); %average Volt from healthy cells
+    else
+        break;
+    end;
+    LCon.Ns=ceil(LCon.Vd/LCon.aveV);
+    tind=find(LCon.dfaultcells==1);
+    originfaulty=tind;
+    actNt=LCon.Nt-length(tind); %actual Num of cells available
+    LCon.Np=floor((actNt)/LCon.Ns);
+
+    if gi==1
+        preNs=LCon.Ns;preNp=LCon.Np;
+    end
+    
+    num2bypass=actNt-LCon.Np*LCon.Ns;
+
+    if num2bypass>0
+        for i=1:num2bypass %select cells to bypass in order of the lowest volt first
+            tind=(LCon.dfaultcells==0&LCon.ddetourcells==0);
+            tind=find(LCon.dcurvolt==min(LCon.dcurvolt(tind)));
+            LCon.ddetourcells(tind)=1;
+        end;
+    end;
+    % Wiring and Drawing
+    for j=1:LCon.Np
+        tind=find(LCon.dfaultcells==0&LCon.ddetourcells==0&LCon.dconncells==0);
+        LCon.dfeedsw(tind(1))=1; %feed switch ON on dev1
+        LCon.dconncells(tind(1))=1; %connectivity indication
+        for i=1:LCon.Ns-1
+            LCon.dserisw(tind(i))=1; % series switch ON from dev2 till dev(n-1)
+            LCon.dconncells(tind(i))=1; %connectivity indication
+            LCon.totV=LCon.totV+LCon.dcurvolt(tind(i)); %increase in volt
+            LCon.totV2=LCon.totV2+LCon.dcurvolt2(tind(i)); %increase in volt
+        end %i
+        i=LCon.Ns;
+        LCon.dparasw(tind(i))=1; % parallel switch ON on devn
+        LCon.dconncells(tind(i))=1; %connectivity indication
+        LCon.totV=LCon.totV+LCon.dcurvolt(tind(i));%increase in volt
+        LCon.totA=LCon.totA+LCon.dcuramp(tind(i));%increase in ampere
+        LCon.totV2=LCon.totV2+LCon.dcurvolt2(tind(i));%increase in volt
+        LCon.totA2=LCon.totA2+LCon.dcuramp(tind(i));%increase in ampere
+
+    end %j
+    if LCon.Np > 0
+        LCon.totV=LCon.totV/LCon.Np;
+        LCon.totV2=LCon.totV2/LCon.Np;
+    end;
+
+end %if fqov
+
+% Wiring and Drawing
+if mod(gi,fqov)~=0 & gi ~= 1
+    LCon.totV=0;LCon.totA=0;
+    LCon.totV2=0;LCon.totA2=0;
+for j=1:LCon.Np
+    tind=find(LCon.dfaultcells==0&LCon.ddetourcells==0);
+    for i=1:LCon.Ns-1
+        LCon.totV=LCon.totV+LCon.dcurvolt(tind(i)); %increase in volt
+        LCon.totV2=LCon.totV2+LCon.dcurvolt2(tind(i));
+    end %i
+    i=LCon.Ns;
+    LCon.totV=LCon.totV+LCon.dcurvolt(tind(i));%increase in volt
+    LCon.totA=LCon.totA+LCon.dcuramp(tind(i));%increase in ampere
+    LCon.totV2=LCon.totV2+LCon.dcurvolt2(tind(i));%increase in volt
+    LCon.totA2=LCon.totA2+LCon.dcuramp(tind(i));%increase in ampere
+end %j
+if LCon.Np > 0
+   LCon.totV=LCon.totV/LCon.Np;
+   LCon.totV2=LCon.totV2/LCon.Np;
+end;
+end %if
+
+voltagefast=[voltagefast [LCon.totV; LCon.totV*LCon.totA]];
+voltageslow=[voltageslow [LCon.totV2; LCon.totV2*LCon.totA2]];
+numfcells=[numfcells length(find(LCon.dfaultcells==1))];
+if preNs~=LCon.Ns | preNp~=LCon.Np | gi==1
+    %text(length(voltagefast)-6, LCon.totV+0.5,['(' num2str(LCon.Ns) ',' num2str(LCon.Np) ')'],'FontSize',12);
+end
+preNs=LCon.Ns;preNp=LCon.Np;
+
+%Decrease voltage in cells connected linearly
+if mod(gi,fqod)==0
+    tind=find(LCon.dconncells==1);
+    if ~isempty(tind)
+        if vdegArt >0
+            LCon.dcurvolt(tind)=LCon.dcurvolt(tind)*dratio;
+            LCon.dcurvolt2(tind)=LCon.dcurvolt2(tind)*dratio;
+        else
+            y=polyval(pfast,[gi-fqod gi]);
+            LCon.dcurvolt(tind)=LCon.dcurvolt(tind) + (y(2)-y(1));
+            y=polyval(pslow,[gi-fqod gi]);
+            LCon.dcurvolt2(tind)=LCon.dcurvolt2(tind) + (y(2)-y(1));
+        end;
+    end;
+end;
+
+end %for gi
+
+rl=size(voltagefast);
+plot([1:rl(2)],voltagefast(1,:),'--',[1:rl(2)],voltageslow(1,:),':','MarkerSize',10,'LineWidth',2);
+legend('2C','C');
+xlabel('Time Tick','FontSize',16);
+ylabel('Supply Voltage (V)','FontSize',16);
+hold off

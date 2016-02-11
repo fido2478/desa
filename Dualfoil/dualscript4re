@@ -1,0 +1,15 @@
+ipath='input/'
+iex='.in'
+name='dualfoil5.in'
+opath='../sch/dat/'
+oex='.out'
+for ((a=1; a<=100; a++))
+do
+   fname='dualfoil5CRE'$a
+   echo 'cp' $ipath$fname$iex $name
+   'cp' $ipath$fname$iex $name
+   echo './dualfoil5' 
+   './dualfoil5' 
+   echo 'mv' 'dualfoil5.out' $opath$fname$oex
+   'mv' 'dualfoil5.out' $opath$fname$oex
+done

@@ -1,0 +1,20 @@
+For Windows (98, NT, 2000, and XP):
+1.  Download the MinGW precompiled binary, made available by courtesy of the GNU project:
+(about 10 MB) mingwv2.exe
+
+2.  Double-click on it to run the installer.  It will install the fortran compiler g77 as well as compilers for
+other languages such as c.
+
+3.  Now go to the DOS prompt (also called command prompt).  Go to the root directory (C:)
+and edit the file AUTOEXEC.BAT (warning: messing up this particular file can incapacitate your PC) to add the line:
+PATH=C:\folder\bin;%PATH%; where \folder is the directory where you put mingw.  Restart your computer to activate this new path file.  Newer Windows versions require you to go to start? control panel? System? Advanced? Environmental variables and adding the path in the appropriate section.  Warnings about your PC being incapacitated apply.  Come to think about it, these warnings almost always apply.
+
+# When you installed Dualfoil, I pressume you did it by step 3.
+
+4.  The compiler is run from the DOS prompt by typing: 
+g77 filename.f -o filename.exe
+where filename is the name of your fortran file. This should create an output file called a.exe.
+
+5.  You can execute this by typing: a 
+
+6. changing parameters: 20.0d0  60.0d0  1  2.0d0  4.70d0 !Discharge at 10A/m2 for 60min, low/high cutoff 2.0/4.7 V 

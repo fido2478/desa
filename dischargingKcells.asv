@@ -1,0 +1,20 @@
+function [avail_pack, avail_volt]=dischargingKcells(avail_pack,...
+    avail_volt,load_demand,max_cap,interval,sp,k,refC,coeff)
+for m=1:k
+    discharge=load_demand*avail_pack(sp(m))/sum(avail_pack(sp(1:k)));
+    avail_pack(sp(m))=avail_pack(sp(m))-discharge;
+    soc=avail_pack(sp(m))/max_cap;
+    ti=0;
+    ind=find(refC.sX<=soc);
+    if ~isempty(ind)
+        ti=refC.tX(ind(1));
+    end
+    p=coeff(discharge,:);
+    dt=polyval(p,ti+1)-polyval(p,ti); %min
+    dV=polyval(refC.p,ti)-polyval(refC.p,ti+dt); %voltage
+    avail_volt(sp(m))=avail_volt(sp(m))-dV;
+    avail_pack(sp(m))=
+    %pw=hashing(min_pw,discharge/interval);
+    %coulomb
+    %avail_volt(sp(m))=emulate_voltagechange(pw,discharge/interval,soc);
+end 

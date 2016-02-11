@@ -1,0 +1,130 @@
+function [res]=calcul_coeff_re(st,en)
+% it returns coefficents of RT: 1m; RT: 2m; RT: 10m each
+% currently ignore SoC state
+% input: previous discharge rate (xval), rest time (yval), 
+% increment of voltage (zval)
+% convert A/m2 to Coulomb by division of 23
+%[1-10,11-20,21-30,31-40,41-50,51-100]
+ovolt=4.06267;
+path='dat/';
+datC=[];xval=[]; yval=[]; zval=[];h=0;t=0;
+for i=st:en
+    filename=[path 'dualfoil5CRE' num2str(i) '.out'];
+    dat=readfile(filename); %C10
+    time5C=dat(1,1); vol5C=dat(4,1);dischar=dat(6,1);
+    %time5C=dat(1,1); 
+    %vol5C=dat(4,1)-dat(4,1);
+    for j=2:length(dat(1,:))
+        if dat(1,j)~=dat(1,j-1)
+            time5C=[time5C dat(1,j)];
+            dischar=[dischar dat(6,j)];
+            vol5C=[vol5C dat(4,j)];
+        end
+    end
+    ind=find(dischar<1);
+    k=[ind(1)];
+    for j=2:length(ind)
+        if (ind(j)-ind(j-1)) > 1
+            k=[k ind(j-1) ind(j)]; %k = index of dat
+        end
+    end
+    k=[k ind(j)]; %points at which discharge rate changed
+
+    tail=floor((k(4)-k(3))*1/5);
+    h=k(3);t=k(4)-tail;
+    if i < st+1
+        yval=[yval; time5C(h:t)-time5C(h)];
+    end
+    zval=[zval; vol5C(h:t)-vol5C(h)];
+    xval=[xval i/23]; %coulomb
+
+    %zval=[zval; vol5C(h:t)-vol5C(h)];
+    %yval=[yval; time5C(h:t)-time5C(h)];
+    %xval=[xval i/23];
+end
+zval=zval';
+
+
+X=[st:en]/23;%coumb
+Y=max(zval);
+X=[0 X]; Y=[0 Y];
+p=opt_p(X,Y);
+pval=polyval(p,X);
+ind1=find(yval<=1 & yval>0.9);
+Y=[0 zval(ind1,:)];
+p1= opt_p(X,Y);
+p1val=polyval(p1,X);
+ind2=find(yval<=2 & yval>1.9);
+Y=[0 zval(ind2,:)];
+p2= opt_p(X,Y);
+p2val=polyval(p2,X);
+res=[p1; p2; p]; %RT: 1m; RT 2m; RT 10m
+
+if 1
+min=Inf;indx=0; min_pw=0;
+%figure
+for j=1:25
+    p_w=polyfitweighted2(xval,yval,zval,j,zval); %17 is opt
+    ev=polyval2(p_w,xval(round((en-st)/2)),yval)-zval(:,round((en-st)/2)); %error vector
+    perf=sse(ev);
+    if min > perf
+        min=perf; indx=j; min_pw=p_w;
+    end
+%    H1=plot(yval,polyval2(p_w,xval(round((en-st)/2)),yval),':',yval,zval(:,round((en-st)/2)),'-');
+end
+figure
+hold on
+for i=10:10:length(xval)
+    %H1=plot(yval,polyval2(min_pw,xval(i),yval),':',yval,zval(:,i),'-'); %voltage
+    H1=plot(yval,zval(:,i)/ovolt*100,'-','LineWidth',2); %voltage
+    sz=size(zval(:,i));
+    text(yval(sz(1,1)-3),zval(sz(1,1),i)/ovolt*100,[num2str(i/23,'%1.2f'), 'C'],'FontSize',12);
+end
+xlabel('Time (min)'); ylabel('Recovered voltage (%)');
+hold off
+
+figure
+%regression of recovery effect wrt discharge rate
+X=[st:en]/23;
+p=opt_p(X,max(zval));
+pval=polyval(p,X);
+ind1=find(yval<=1 & yval>0.9);
+p1= opt_p(X,zval(ind1,:));
+p1val=polyval(p1,X);
+ind2=find(yval<=2 & yval>1.9);
+p2= opt_p(X,zval(ind2,:));
+p2val=polyval(p2,X);
+plot(X,max(zval),':', X,pval,'-',...
+    'MarkerSize',10,'LineWidth',2);legend('RT: 10 m','Regr'); %relaxing time
+xlabel('Discharge rate (C)','FontSize',12);ylabel('Degree of recovery effect (V_{r})','FontSize',12);
+
+figure
+%degree of recovery effect vs discharge rate (revsdisch.fig)
+plot(X,max(zval)/ovolt*100,'-',X,zval(ind2,:)/ovolt*100,'--',X,zval(ind1,:)/ovolt*100,'-.',...
+    'MarkerSize',10,'LineWidth',2);legend('RT: 10 m','RT: 2 m', 'RT: 1 m'); %relaxing time
+xlabel('Discharge rate (C)','FontSize',12);ylabel('Degree of recovery effect (V_{r}/V_{o} \times 100 %)','FontSize',12);
+figure
+x=[st:en]/23;%reperdis.fig
+plot([1:length([st:en])]/23,max(zval)/ovolt*100./x,'x-','MarkerSize',10,'LineWidth',2);
+xlabel('Discharge rate (*C)','FontSize',12);
+ylabel('Recovery efficiency (V_{r}/V_{o}/C \times 100 %)','FontSize',12);
+diff_zval=diff(zval);
+%csd_zval=cumsum(diff_zval); %(time,discharge)
+m_zval=max(zval)+max(zval)*0.05; %(1,discharge)
+pdf_zval=[];
+for i=1:length(m_zval)
+    pdf_zval=[pdf_zval; diff_zval(:,i)'/m_zval(i)];
+    %cdf_zval=[cdf_zval; zval(:,i)'/m_zval(i)];
+end
+mpdf_zval=mean(pdf_zval);
+%mcdf_zval=mean(cdf_zval);
+figure
+plot(yval,[0 mpdf_zval],'-','MarkerSize',10,'LineWidth',2);
+xlabel('Relaxing time (min)','FontSize',12); ylabel('Recovery rate (pdf)','FontSize',12);
+figure
+%cumulative recovery rate vs time (crr.fig)
+plot(yval,cumsum([0 mpdf_zval]),'MarkerSize',10,'LineWidth',2);
+xlabel('Relaxing time (min)','FontSize',12); 
+ylabel('Cumulative recovery rate','FontSize',12);
+end %if 0
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

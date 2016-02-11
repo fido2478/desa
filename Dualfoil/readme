@@ -1,0 +1,2 @@
+vi dualfoil5.in % edit discharge rate and interval
+./dualfoil5 dualfoil5.in|mv dualfoil5.out ../sch/dat/dualfoil5C74.out

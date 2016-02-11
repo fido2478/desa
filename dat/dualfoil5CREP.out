@@ -1,0 +1,78 @@
+     50  lim, limit on number of iterations
+ 100.00  h1,  thickness of negative electrode (microns)
+  25.00  h2,  thickness of separator (microns)
+ 100.00  h3,  thickness of positive electrode (microns)
+  25.00  hcn, thickness of negative electrode current collector (microns)
+  25.00  hcp, thickness of positive electrode current collector (microns)
+     80  n1,  number of nodes in negative electrode
+     40  n2,  number of nodes in separator
+     80  n3,  number of nodes in positive electrode
+ 298.00  T,   temperature (K)
+
+ 1000.0  xx(1,n1+2), initial concentration (mol/m3)
+ 0.6000  csx,   initial stoichiometric parameter for negative
+ 0.5000  csy,   initial stoichiometric parameter for positive
+   30.0  tmmax, maximum time step size (s)
+ .4E-13  dfs1, diffusion coefficient in negative solid (m2/s)
+ .1E-12  dfs3, diffusion coefficient in positive solid (m2/s)
+  10.00  Rad1,  radius of negative particles (microns)
+  10.00  Rad3,  radius of positive particles (microns)
+
+  0.300  ep1,   volume fraction of electrolyte in negative electrode
+  0.000  epp1,  volume fraction of polymer phase in negative electrode
+  0.100  epf1,  volume fraction of inert filler in negative electrode
+  1.000  ep2,   volume fraction of electrolyte in separator
+  0.000  epp2,  volume fraction of polymer phase in separator
+  0.300  ep3,   volume fraction of electrolyte in positive electrode
+  0.000  epp3,  volume fraction of polymer phase in positive electrode
+  0.200  epf3,  volume fraction of inert filler in positive electrode
+ 0.10E+03  sig1,  conductivity of negative matrix (S/m)
+  10.      sig3,  conductivity of positive matrix (S/m)
+  372.00  cot1,  coulombic capacity of negative material (mAh/g)
+  274.00  cot3,  coulombic capacity of positive material (mAh/g)
+ .1E-04  rka1,  reaction rate constant for negative reaction 
+ .3E-10  rka3,  reaction rate constant for positive reaction
+
+ 1324.0  re,   density of electrolyte (kg/m3)
+ 1800.0  rs1,  density of negative insertion material (kg/m3)
+ 5010.0  rs3,  density of positive insertion material (kg/m3)
+ 1800.0  rf,   density of inert filler (kg/m3)
+ 1780.0  rpl,  density of polymer phase (kg/m3)
+    0.0  rc,   density of separator material (kg/m3)
+ 8954.0  rcn,  density of negative current collector (kg/m3)
+ 2707.0  rcp,  density of positive current collector (kg/m3)
+
+   0.001000  ranode,   anode film resistance (ohm-m2)
+   0.000000  rcathde,  cathode film resistance (ohm-m2)
+   0.00  htc,   heat-transfer coefficient with external medium (W/m2K)
+   0.000000  dUdT,  temperature coefficient of EMF (V/K)
+ 2000.0  Cp,    heat capacity of cell (J/kg-K)
+   0.00  residm,    residual mass (kg/m2)
+ 298.00  Tam,   ambient temperature (K)
+      1  ncell, number of cells in a cell stack
+      2  lht,   0 uses htc,  1 calcs htc,  2 isothermal
+
+      0    nside, side reaction flag 
+
+      1  il1,   1 for long print-out  0 for short print-out
+     10  il2,   prints every il2 th node in long print-out
+     10  il3,   prints every il3 th time step in long print-out
+      1  lflag, 0 for electrolyte in separator only, 1 for uniform
+      0  imp, 0 for no impedance, 1 for impedance
+   0.00  capp1,  capacitance of negative material (F/m2)
+   0.00  capp3,  capacitance of positive material (F/m2)
+      3  lcurs, number of current changes
+  
+ MCMB 2528 Graphite (Bellcore)
+ LiPF6 in EC:DMC
+ LiCoO2 (Cobalt dioxide)
+ open-circuit potential, negative   0.178978294
+ delta S negative   0.
+ open-circuit potential, positive   4.24165195
+ delta S positive   0.
+  
+      DUAL INSERTION CELL VERSION 5.1
+  
+   Time     Util N  Util P  Cell Pot   Uocp      Curr      Temp   heatgen
+   (min)       x       y      (V)       (V)      (A/m2)    (C)    (W/m2)
+  

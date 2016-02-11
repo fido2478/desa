@@ -1,0 +1,21 @@
+function batpack=drawing(batpack,etimebp,k,G1,G2,load, coeff,dt)
+schd=[]; 
+if ~isempty(G1)
+    tmpack=batpack(G1);
+    slc=sort(batpack(G1),'descend');
+    for i=1:k %k<=num(G1)
+        ind=find(slc(i)==tmpack);
+        if length(ind)>1
+            ind=ind(1);
+        end;
+        schd=[schd G1(ind)];
+        tmpack(ind)=0;
+    end
+elseif ~isempty(G2)
+    k=length(G2);
+    schd=G2;
+end
+for i=1:k%time/k in parallel assuming time proportion to load
+    volt=voltfun(coeff,load,etimebp(schd(i)),dt); 
+    batpack(slc(i))=volt;
+end

@@ -1,0 +1,25 @@
+function bvolt=re_effect_check(bat_pack,coeff_re)
+% assume RT is either 0, 1, or 2
+ind=find(bat_pack.RE>0);
+if ~isempty(ind)
+    for i=1:length(ind)
+        RT=bat_pack.RE(ind(i));
+        if bat_pack.ldisch(ind(i))>0
+            if RT>1  
+                re_volt=polyval(coeff_re(RT,:),bat_pack.ldisch(i))-...
+                polyval(coeff_re(RT-1,:),bat_pack.ldisch(i));
+                if re_volt > 0
+                    bat_pack.bvolt(ind(i))=bat_pack.bvolt(ind(i))+re_volt;
+                end
+                bat_pack.ldisch(ind(i))=0;
+                bat_pack.RE(ind(i))
+            else % RT==1
+                re_volt=polyval(coeff_re(RT,:),bat_pack.ldisch(ind(i)));
+                if re_volt>0
+                    bat_pack.bvolt(ind(i))=bat_pack.bvolt(ind(i))+re_volt;
+                end
+            end
+        end
+    end
+end
+bvolt=bat_pack.bvolt;

@@ -1,0 +1,7 @@
+function res=loadfile(fname,arg,dsize)
+fid=fopen(fname,'w');
+res=fid;
+if fid>=0
+    res=fscanf(fid,arg,dsize);
+    fclose(fid);
+end

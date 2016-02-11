@@ -1,0 +1,38 @@
+function [xi,w, Recordedw]=rls(lambda,M,u,d,delta,N) 
+% Recursive Least Squares 
+% Call: 
+% [xi,w]=rls(lambda,M,u,d,delta); 
+% 
+% Input arguments: 
+% lambda = forgetting factor, dim 1x1 
+% M = filter length, dim 1x1 
+% u = input signal, dim Nx1 
+% d = desired signal, dim Nx1 
+% delta = initial value, P(0)=delta^-1*I, dim 1x1 
+% 
+% Output arguments: 
+% xi = a priori estimation error, dim Nx1 
+% w = final filter coefficients, dim Mx1
+
+% inital values 
+w=zeros(M,1); 
+P=delta*eye(M); 
+
+% make sure that u and d are column vectors 
+u=u(:); 
+d=d(:); 
+% input signal length 
+%N=length(u); 
+% error vector 
+xi=d; 
+% Loop, RLS 
+for n=M:N 
+    uvec=u(n:-1:n-M+1); 
+    phi = uvec' * P;
+    xi(n)=d(n) - w'*uvec; 
+    
+    k=P*uvec/(lambda + phi * uvec); 
+    w=w + k * conj(xi(n)); 
+    P=(P - k * phi)/lambda; 
+    Recordedw(1:M,n)=w;
+end 
